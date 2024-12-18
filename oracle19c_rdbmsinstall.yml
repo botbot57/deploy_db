@@ -1,0 +1,9 @@
+- hosts: ansible_client
+
+  user: root
+
+
+
+  roles:
+
+   - oracle19c_install

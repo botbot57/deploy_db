@@ -1,0 +1,214 @@
+---
+- name: display pre database software install message
+
+  remote_user: "{{ root_user }}"
+
+  debug:
+
+    msg:
+
+        - 'Oracle Database Software 19c Installation started for Single Instance at {{ansible_date_time.iso8601}}:'
+
+- name: Temporarily disable SELinux
+  command: setenforce 0
+  become: true
+- name: Disable SELinux
+  selinux:
+    policy: targeted
+    state: disabled
+
+
+- name: Install oracle-database-preinstall-19c
+  yum:
+    name: oracle-database-preinstall-19c
+    state: present
+
+- name: add variable enviroment
+  blockinfile:
+    path: /home/oracle/.bash_profile
+    block: |
+      export ORACLE_HOME=/mnt/u05/app/oracle/product/19c/dbhome_1
+      export ORACLE_BASE=/mnt/u05/app/oracle
+      export PATH=$ORACLE_HOME/bin:$PATH
+      export LD_LIBRARY_PATH=$ORACLE_HOME/lib:$LD_LIBRARY_PATH
+    create: yes 
+- name: Reload .bash_profile for oracle user
+  shell: "source /home/oracle/.bash_profile"
+
+- name: creating installation directories
+
+  when: inventory_hostname in groups['ansible_client']
+
+  file:
+
+    path="{{ item }}"
+
+    state=directory
+
+    mode=0755
+
+  with_items:
+
+    - "{{ oracle_inventory }}"
+
+    - "{{ oracle_base }}"
+
+    - "{{ stage_dir }}"
+
+    - "{{ oracle_home }}"
+
+  tags:
+
+   - createdirectores
+
+
+
+- name: Changing  ownership, group and permissions
+
+  file:
+
+    path: "{{ item }}"
+
+    owner: "{{ oracle_user }}"
+    group: oinstall
+
+    mode: '0755'
+
+  with_items:
+
+    - "{{ oracle_inventory }}"
+
+    - "{{ oracle_base }}"
+
+    - "{{ stage_dir }}"
+
+    - "{{ oracle_home }}"
+
+  tags:
+
+   - ownershipchange
+
+
+
+- name: coping database software from Source to Target hosts
+
+  when: inventory_hostname in groups['ansible_client']
+
+  copy: src=/mnt/software/LINUX.X64_193000_db_home.zip dest=/mnt/u05/app/oracle/product/19c/dbhome_1 mode=0777
+  tags:
+
+   - copy_software
+
+- name: Set ownership if directory exists
+  ansible.builtin.file:
+    path: /mnt/u05/app/oracle/product/19c/dbhome_1/LINUX.X64_193000_db_home.zip
+    state: file
+    owner: "{{ oracle_user }}"
+    group: oinstall
+#    recurse: yes
+
+- name: Unpack Oracle 19c Database Software to the target server
+  become: yes
+  become_user: "{{ oracle_user }}"
+  when: inventory_hostname in groups['ansible_client']
+
+  unarchive:
+
+     src: /mnt/u05/app/oracle/product/19c/dbhome_1/LINUX.X64_193000_db_home.zip
+
+     dest: /mnt/u05/app/oracle/product/19c/dbhome_1
+
+     remote_src: true
+#     extra_opts:
+#       - "--skip-old-files"  
+
+  tags:
+
+   - extractsoftware
+
+
+
+- name: Setup Oracle database 19c installation response file
+
+  when: inventory_hostname in groups['ansible_client']
+
+  template: src=roles/oracle19c_install/templates/{{ oradbsoft_rsp }}.rsp.j2 dest={{ stage_dir }}/{{ oradbsoft_rsp }}.rsp mode=0755
+
+  tags:
+
+   - setuprspfile
+
+
+
+
+
+- name: Verifying Oracle 19c Database Software installation pre-requisites
+
+  when: inventory_hostname in groups['ansible_client']
+  become: yes
+  become_user: "{{ oracle_user }}"
+
+  shell: "{{ oracle_home }}/runInstaller -executePrereqs -silent -responseFile {{ stage_dir }}/{{ oradbsoft_rsp }}.rsp -noconfig -ignorePrereqFailure"
+
+  ignore_errors: True
+
+  tags:
+
+   - Prereqs
+
+
+
+- name: Staring Installation of Oracle 19c Database Software
+
+  when: inventory_hostname in groups['ansible_client']
+  become: yes
+
+  become_user: "{{ oracle_user }}"
+
+  shell: "{{ oracle_home }}/runInstaller -silent -responseFile {{ stage_dir }}/{{ oradbsoft_rsp }}.rsp -noconfig -ignorePrereqFailure"
+
+  ignore_errors: True
+
+  register: command_output
+
+- debug:
+
+    var: command_output.stdout_lines
+
+  tags:
+
+   - dbsoft19c_install
+
+
+
+- name: Execute orainstroot.sh
+
+  when: inventory_hostname in groups['ansible_client']
+
+  remote_user: "{{ root_user }}"
+
+  shell: "{{ oracle_inventory }}/orainstRoot.sh"
+
+  ignore_errors: True
+
+  tags:
+
+   - db19c_exeorainstroot
+
+
+
+- name: Execute root.sh
+
+  when: inventory_hostname in groups['ansible_client']
+
+  command: "{{ oracle_home }}/root.sh -silent"
+
+  become: yes
+
+  become_user: root
+
+  tags:
+
+   - db19c_exeroot
+
+

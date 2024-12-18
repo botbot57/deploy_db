@@ -1,0 +1,22 @@
+oracle_install_group:            "oracle"
+
+mount_directory:                 "/"
+
+root_directory:                  "/mnt/u05"
+
+stage_dir:                       "/mnt/u05/stage"
+
+scripts_directory:               "{{ root_directory }}/app/scripts"
+
+oracle_base:                     /mnt/u05/app/oracle
+
+oracle_home:                     /mnt/u05/app/oracle/product/19c/dbhome_1
+
+oracle_inventory:                /mnt/orauser/app/oraInventory
+
+oracle_user:                     oracle
+
+root_user:                       root
+
+oradbsoft_rsp:                   "19cEE_SoftOnly"
+# vars file for oracle19c_install
