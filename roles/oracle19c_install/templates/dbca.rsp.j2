@@ -1,0 +1,25 @@
+templateName=/u01/app/oracle/product/19.0.0/dbhome_1/assistants/dbca/templates/General_Purpose.dbc
+gdbName=DBACLASS9
+sid=DBACLASS9
+sysPassword=sys
+systemPassword=sys
+emConfiguration=NONE
+storageType=FS
+characterSet=AL32UTF8
+#
+databaseConfigType SI
+createAsContainerDatabase false                                                                                                        
+datafileDestination {{ oracle_data }}
+recoveryAreaDestination {{ oracle_fra }}
+enableArchive true
+
+nationalCharacterSet AL16UTF16
+redoLogFileSize 200
+totalMemory 2300
+memoryMgmtType AUTO_SGA
+sampleSchema true
+databaseType MULTIPURPOSE
+initParams nls_language=AMERICAN,log_archive_format=%t_%s_%r.dbf
+createListener LISTENER:1521
+emConfiguration NONE
+ignorePreReqs
