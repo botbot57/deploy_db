@@ -19,4 +19,18 @@ oracle_user:                     oracle
 root_user:                       root
 
 oradbsoft_rsp:                   "19cEE_SoftOnly"
+oracle_fra:                      /u01/app/oracle/fra
+oracle_data:                     /u01/app/oracle/oradata
+oracle_password:                 1
+response_file_create_db:         dbca
+template_name: "General_Purpose.dbc"
+gdb_name: "DBACLASS9"
+sid: "DBACLASS9"
+sys_password: "sys"
+system_password: "sys"
+em_configuration: "NONE"
+datafile_destination: "/u01/app/oracle/oradata"
+storage_type: "FS"
+character_set: "AL32UTF8"
+
 # vars file for oracle19c_install
