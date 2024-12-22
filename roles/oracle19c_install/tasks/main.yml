@@ -73,6 +73,7 @@
     group: oinstall
 
     mode: '0755'
+    recurse: yes
 
   with_items:
 
@@ -211,4 +212,31 @@
 
    - db19c_exeroot
 
+- name: Setup response file for database creation
+  when: inventory_hostname in groups['ansible_client']
+
+  template: src=roles/oracle19c_install/templates/{{ response_file_create_db }}.rsp.j2 dest={{ stage_dir }}/{{ response_file_create_db }}.rsp mode=0755
+
+  tags:
+    - setup_create_db_rsp
+- name: Create database using DBCA
+  become: true
+  become_user: "{{ oracle_user }}"
+  shell: "{{ oracle_home }}/bin/dbca -silent -createDatabase -responseFile {{ stage_dir }}/{{ response_file_create_db }}.rsp  -ignorePrereqFailure"
+
+  register: dbca_output
+  ignore_errors: yes
+  tags:
+    - create_database
+
+- name: Debug DBCA output
+  debug:
+    var: dbca_output.stdout
+
+- name: Fail if database creation failed
+  fail:
+    msg: "Database creation failed! Check logs for details."
+  when: dbca_output.rc != 0
+  tags:
+    - create_database
 
